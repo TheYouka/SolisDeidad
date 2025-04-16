@@ -74,19 +74,6 @@ void hashFree(HashMap *map) {
 }
 
 int main() {
-    HashMap *map = hashCreate();
-
-    hashInsert(map, "name", "Alice");
-    hashInsert(map, "age", "25");
-    hashInsert(map, "city", "Wonderland");
-
-    char *value = hashSearch(map, "name");
-    if (value) {
-        printf("Found: %s\n", value);
-    } else {
-        printf("Not found\n");
-    }
-
-    hashFree(map);
+    
     return 0;
 }

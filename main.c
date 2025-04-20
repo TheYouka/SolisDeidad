@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <windows.h> // Para GetCurrentDirectory
-#include "hashmap.h"
+//#include "hashmap.h"
 #include "pila.h" // Para la pila
 #include "cola.h" // Para la cola
 // Importa utils.h
@@ -20,6 +20,20 @@ typedef struct {
     int y;
     int estado; // 0: libre, 1: ocupado
 } Taxi;
+
+// Struct para las solicitudes
+typedef struct {
+    int id; // ID de la solicitud
+    int x; // Coordenada x de la llamada
+    int y; // Coordenada y de la llamada
+    int destino_x; // Coordenada x del destino
+    int destino_y; // Coordenada y del destino
+} Solicitud;
+
+typedef struct {
+    int x; // Coordenada x del nodo
+    int y; // Coordenada y del nodo
+}Coord;
 
 void mostrar_menu() {
     printf("\n=== MENÚ PRINCIPAL ===\n");
@@ -46,7 +60,7 @@ void imprimir_mapa(char mapa[MAP_SIZE][MAP_SIZE]) {
     }
 };
 
-void cargar_nodos(char mapa[MAP_SIZE][MAP_SIZE], const char *filename) {
+void cargar_nodos(char mapa[MAP_SIZE][MAP_SIZE], const char *filename, Coord nodos[MAX_NODOS]) {
     FILE *file = fopen(filename, "r");
     if (!file) {
         perror("Error al abrir el archivo nodos.txt");
@@ -62,7 +76,13 @@ void cargar_nodos(char mapa[MAP_SIZE][MAP_SIZE], const char *filename) {
         if (sscanf(line, "%d,%d,%d", &id, &x, &y) == 3) {
             // Verifica que las coordenadas estén dentro del rango del mapa
             if (x >= 0 && x < MAP_SIZE && y >= 0 && y < MAP_SIZE) {
-                mapa[x][y] = 'o'; // Asigna el último dígito del número al nodo
+                mapa[x][y] = 'o'; // Asigna el nodo al mapa
+                if (id >= 0 && id < MAX_NODOS) {
+                    nodos[id].x = x; // Actualiza la coordenada x del nodo
+                    nodos[id].y = y; // Actualiza la coordenada y del nodo
+                } else {
+                    printf("ID fuera de rango: %d\n", id);
+                }
             } else {
                 printf("Coordenadas fuera de rango: %d %d\n", x, y);
             }
@@ -72,7 +92,7 @@ void cargar_nodos(char mapa[MAP_SIZE][MAP_SIZE], const char *filename) {
     }
 
     fclose(file);
-};
+}
 
 // funcion que cargue los taxis
 void cargar_taxis(Taxi taxi[MAP_SIZE][MAP_SIZE], char mapa[MAP_SIZE][MAP_SIZE], const char *filename) {
@@ -112,6 +132,8 @@ void cargar_taxis(Taxi taxi[MAP_SIZE][MAP_SIZE], char mapa[MAP_SIZE][MAP_SIZE], 
     fclose(file);
 }
 
+
+
 // Cargar calles desde el archivo calles.txt
 void cargar_calles(int grafo[MAX_NODOS][MAX_NODOS], const char *filename) {
     FILE *file = fopen(filename, "r");
@@ -141,6 +163,74 @@ void cargar_calles(int grafo[MAX_NODOS][MAX_NODOS], const char *filename) {
 
     fclose(file);
 }
+
+
+// Cargar solo las solicitudes desde el archivo solicitudes.txt
+void cargar_solicitudes(Queue *colaSolicitudes, const char *filename) {
+    FILE *file = fopen(filename, "r");
+    if (!file) {
+        perror("Error al abrir el archivo solicitudes.txt");
+        return;
+    }
+
+    char line[100]; // Buffer para leer líneas completas
+    int id, x, y;
+
+    // lee con fgets() para evitar problemas con espacios en blanco
+    while (fgets(line, sizeof(line), file)) {
+        // Lee id, x y y de la línea
+        if (sscanf(line, "%d,%d,%d", &id, &x, &y) == 3) {
+            // Crear una nueva solicitud
+            Solicitud *solicitud = (Solicitud *)malloc(sizeof(Solicitud));
+            if (!solicitud) {
+                perror("Error al asignar memoria para la solicitud");
+                fclose(file);
+                return;
+            }
+            solicitud->id = id;
+            solicitud->x = x;
+            solicitud->y = y;
+
+            // Encolar la solicitud
+            queuePush(colaSolicitudes, solicitud);
+        } else {
+            printf("Error al leer la línea: %s\n", line);
+        }
+    }
+
+    fclose(file);
+}
+
+
+// Funcipon para agregar nodos al mapa
+void agregar_nodos(char mapa[MAP_SIZE][MAP_SIZE]) {
+    
+    int id, x, y;
+    char opcion;
+    do {
+        printf("Ingrese el ID del nodo: ");
+        scanf("%d", &id);
+        printf("Ingrese la coordenada X del nodo: ");
+        scanf("%d", &x);
+        printf("Ingrese la coordenada Y del nodo: ");
+        scanf("%d", &y);
+
+        // Verifica que las coordenadas estén dentro del rango del mapa
+        if (x >= 0 && x < MAP_SIZE && y >= 0 && y < MAP_SIZE) {
+            mapa[x][y] = 'o'; // Asigna el nodo al mapa
+            printf("Nodo agregado correctamente.\n");
+        } else {
+            printf("Coordenadas fuera de rango: %d %d\n", x, y);
+        }
+
+        printf("¿Desea agregar otro nodo? (s/n): ");
+        scanf(" %c", &opcion);
+    } while (opcion == 's' || opcion == 'S');
+};
+
+
+
+
 // Función principal de prueba
 int main() {
     
@@ -152,8 +242,16 @@ int main() {
         }
     };
 
+    // Crear un arreglo para los nodos que guarde un struct con sus coordenadas en base a su id
+    Coord nodos[MAX_NODOS];
+    for (int i = 0; i < MAX_NODOS; i++) {
+        nodos[i].x = -1; // Inicializar con -1 (sin nodo)
+        nodos[i].y = -1;
+    }
+
+
     // Cargar nodos desde el archivo nodos.txt
-    cargar_nodos(mapa, "c:\\Users\\the_y\\Documents\\SolisDeidad\\nodos.txt");
+    cargar_nodos(mapa, "c:\\Users\\the_y\\Documents\\SolisDeidad\\nodos.txt",nodos);
    
     // Crear matriz de adyacencia para el grafo
     int grafo[MAX_NODOS][MAX_NODOS];
@@ -183,6 +281,52 @@ int main() {
     // cargar taxis desde el archivo taxis.txt
     FILE *file_taxis = fopen("c:\\Users\\the_y\\Documents\\SolisDeidad\\taxis.txt", "r");
     cargar_taxis(taxi, mapa,"c:\\Users\\the_y\\Documents\\SolisDeidad\\taxis.txt");
+
+    // Crea una cola para las solicitudes, cada solicitud tiene un id (el id del nodo donde se pidió), coordenadas x,y de destino
+    Queue* colaSolicitudes = queueInitialize();
+
+    // Cargar solicitudes desde el archivo solicitudes.txt
+    cargar_solicitudes(colaSolicitudes, "c:\\Users\\the_y\\Documents\\SolisDeidad\\solicitudes.txt");
+
+
+    // Mostrar el menú principal
+    int opcion;
+    do {
+        mostrar_menu();
+        scanf("%d", &opcion);
+
+        switch (opcion) {
+            case 1:
+                agregar_nodos(mapa);
+                break;
+            case 2:
+                // Agregar calle (no implementado en este ejemplo)
+                break;
+            case 3:
+                imprimir_mapa(mapa);
+                break;
+            case 4:
+                // Agregar taxis (no implementado en este ejemplo)
+                break;
+            case 5:
+                // Agregar solicitudes (no implementado en este ejemplo)
+                break;
+            case 6:
+                // Borrar solicitud (no implementado en este ejemplo)
+                break;
+            case 7:
+                // Ver solicitudes (no implementado en este ejemplo)
+                break;
+            case 8:
+                // Simular (no implementado en este ejemplo)
+                break;
+            case 9:
+                printf("Saliendo del programa...\n");
+                break;
+            default:
+                printf("Opción no válida. Intente de nuevo.\n");
+        }
+    } while (opcion != 9);
 
 
     return 0;

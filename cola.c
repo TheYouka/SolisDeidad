@@ -3,7 +3,7 @@
 
 // Node structure
 typedef struct Node {
-    int data;
+    void* data;
     struct Node* next;
 } Node;
 
@@ -26,7 +26,7 @@ int queueIsEmpty(Queue* q) {
 }
 
 // Enqueue an element
-void queuePush(Queue* q, int value) {
+void queuePush(Queue* q, void* value) {
     Node* newNode = (Node*)malloc(sizeof(Node));
     newNode->data = value;
     newNode->next = NULL;
@@ -39,13 +39,13 @@ void queuePush(Queue* q, int value) {
 }
 
 // Dequeue an element
-int queuePop(Queue* q) {
+void* queuePop(Queue* q) {
     if (queueIsEmpty(q)) {
         printf("Queue is empty!\n");
-        return -1;
+        return NULL;
     }
     Node* temp = q->front;
-    int value = temp->data;
+    void* value = temp->data;
     q->front = q->front->next;
     if (q->front == NULL) {
         q->rear = NULL;
@@ -55,10 +55,10 @@ int queuePop(Queue* q) {
 }
 
 // Get the front element
-int queueFront(Queue* q) {
+void* queueFront(Queue* q) {
     if (queueIsEmpty(q)) {
         printf("Queue is empty!\n");
-        return -1;
+        return NULL;
     }
     return q->front->data;
 }

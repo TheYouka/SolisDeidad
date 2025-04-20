@@ -4,25 +4,26 @@
 #include <stdbool.h>
 
 // Tamaño del HashMap
-#define HASH_MAP_SIZE 100
+#define HASHMAP_SIZE 128
 
-// Estructura de un nodo en el HashMap
+// Definición de la estructura de nodo del HashMap
 typedef struct HashNode {
     char *key;                // Clave
-    char *value;              // Valor
+    void *value;              // Valor asociado
     struct HashNode *next;    // Puntero al siguiente nodo (en caso de colisión)
 } HashNode;
 
-// Estructura del HashMap
+// Definición de la estructura del HashMap
 typedef struct HashMap {
-    HashNode *buckets[HASH_MAP_SIZE]; // Arreglo de buckets
+    HashNode *buckets[HASHMAP_SIZE]; // Arreglo de buckets
 } HashMap;
 
 // Prototipos de funciones
-unsigned int hashFunction(const char *key);
-HashMap *hashCreate();
-void hashInsert(HashMap *map, const char *key, const char *value);
-char *hashSearch(HashMap *map, const char *key);
-void hashFree(HashMap *map);
+unsigned int hash(const char *key);
+void hashmap_init(HashMap *map);
+void hashmap_put(HashMap *map, const char *key, void *value);
+void *hashmap_get(HashMap *map, const char *key);
+void hashmap_remove(HashMap *map, const char *key);
+void hashmap_free(HashMap *map);
 
 #endif // HASHMAP_H

@@ -4,23 +4,23 @@
 #include <stdbool.h>
 
 // Definición de la estructura de nodo de la cola
-typedef struct NodoCola {
-    int dato;
-    struct NodoCola* siguiente;
-} NodoCola;
+typedef struct Node {
+    void* data;                // Puntero genérico para almacenar cualquier tipo de dato
+    struct Node* next;
+} Node;
 
 // Definición de la estructura de la cola
-typedef struct Cola {
-    NodoCola* frente;
-    NodoCola* final;
-} Cola;
+typedef struct Queue {
+    Node* front;
+    Node* rear;
+} Queue;
 
 // Prototipos de funciones
-Cola* crearCola();
-void encolar(Cola* cola, int valor);
-int desencolar(Cola* cola);
-int frente(Cola* cola);
-bool estaVacia(Cola* cola);
-void destruirCola(Cola* cola);
+Queue* queueInitialize();
+int queueIsEmpty(Queue* q);
+void queuePush(Queue* q, void* value);
+void* queuePop(Queue* q);
+void* queueFront(Queue* q);
+void queueDestroy(Queue* q);
 
 #endif // COLA_H

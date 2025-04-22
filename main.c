@@ -23,11 +23,9 @@ typedef struct {
 
 // Struct para las solicitudes
 typedef struct {
-    int id; // ID de la solicitud
-    int x; // Coordenada x de la llamada
-    int y; // Coordenada y de la llamada
-    int destino_x; // Coordenada x del destino
-    int destino_y; // Coordenada y del destino
+    int id; // ID del nodo donde se hizo la llamada 
+    int x; // Coordenada x de destino
+    int y; // Coordenada y de destino
 } Solicitud;
 
 typedef struct {
@@ -94,6 +92,42 @@ void cargar_nodos(char mapa[MAP_SIZE][MAP_SIZE], const char *filename, Coord nod
     fclose(file);
 }
 
+
+// Añadir taxis al mapa
+void agregar_taxi(Taxi taxi[MAP_SIZE][MAP_SIZE], char mapa[MAP_SIZE][MAP_SIZE]) {
+    int id_taxi, x, y;
+    char opcion;
+
+    do {
+        printf("Ingrese el ID del taxi: ");
+        scanf("%d", &id_taxi);
+        printf("Ingrese la coordenada X del taxi: ");
+        scanf("%d", &x);
+        printf("Ingrese la coordenada Y del taxi: ");
+        scanf("%d", &y);
+
+        // Verifica que las coordenadas estén dentro del rango del mapa
+        if (x >= 0 && x < MAP_SIZE && y >= 0 && y < MAP_SIZE) {
+            // Comprueba que exista un nodo calle en esa coordenada
+            if (mapa[x][y] == 'o') {
+                taxi[x][y].id_taxi = id_taxi; // Asigna el id del taxi
+                taxi[x][y].x = x; // Asigna la coordenada x
+                taxi[x][y].y = y; // Asigna la coordenada y
+                taxi[x][y].estado = 0; // Inicializa el estado como libre
+                mapa[x][y] = 'x'; // Marca la posición en el mapa con 'x' indicando un taxi
+                printf("Taxi agregado correctamente.\n");
+            } else {
+                printf("No existe un nodo calle en las coordenadas: %d %d\n", x, y);
+            }
+        } else {
+            printf("Coordenadas fuera de rango: %d %d\n", x, y);
+        }
+
+        printf("¿Desea agregar otro taxi? (s/n): ");
+        scanf(" %c", &opcion);
+    } while (opcion == 's' || opcion == 'S');
+}
+
 // funcion que cargue los taxis
 void cargar_taxis(Taxi taxi[MAP_SIZE][MAP_SIZE], char mapa[MAP_SIZE][MAP_SIZE], const char *filename) {
     FILE *file = fopen(filename, "r");
@@ -132,8 +166,6 @@ void cargar_taxis(Taxi taxi[MAP_SIZE][MAP_SIZE], char mapa[MAP_SIZE][MAP_SIZE], 
     fclose(file);
 }
 
-
-
 // Cargar calles desde el archivo calles.txt
 void cargar_calles(int grafo[MAX_NODOS][MAX_NODOS], const char *filename) {
     FILE *file = fopen(filename, "r");
@@ -162,6 +194,35 @@ void cargar_calles(int grafo[MAX_NODOS][MAX_NODOS], const char *filename) {
     }
 
     fclose(file);
+}
+
+// Agregar calles desde consola
+void agregar_calle(int grafo[MAX_NODOS][MAX_NODOS], Coord nodos[MAX_NODOS]) {
+    int id1, id2, peso;
+    char opcion;
+
+    do {
+        printf("Ingrese el ID del primer nodo: ");
+        scanf("%d", &id1);
+        printf("Ingrese el ID del segundo nodo: ");
+        scanf("%d", &id2);
+        printf("Ingrese el peso de la conexión: ");
+        scanf("%d", &peso);
+
+        // Validar que ambos nodos existen en el mapa
+        if (id1 >= 0 && id1 < MAX_NODOS && id2 >= 0 && id2 < MAX_NODOS &&
+            nodos[id1].x != -1 && nodos[id1].y != -1 &&
+            nodos[id2].x != -1 && nodos[id2].y != -1) {
+            grafo[id1][id2] = peso; // Agregar conexión
+            grafo[id2][id1] = peso; // Grafo no dirigido
+            printf("Calle agregada correctamente.\n");
+        } else {
+            printf("Uno o ambos nodos no existen en el mapa.\n");
+        }
+
+        printf("¿Desea agregar otra calle? (s/n): ");
+        scanf(" %c", &opcion);
+    } while (opcion == 's' || opcion == 'S');
 }
 
 
@@ -228,6 +289,49 @@ void agregar_nodos(char mapa[MAP_SIZE][MAP_SIZE]) {
     } while (opcion == 's' || opcion == 'S');
 };
 
+
+// Agregar solicitudes desde consola
+void agregar_solicitud(Queue *colaSolicitudes, Coord nodos[MAX_NODOS]) {
+    int id, destino_x, destino_y;
+    char opcion;
+
+    do {
+        printf("Ingrese el ID del nodo donde se hace el pedido: ");
+        scanf("%d", &id);
+
+        // Validar que el nodo exista
+        if (id >= 0 && id < MAX_NODOS && nodos[id].x != -1 && nodos[id].y != -1) {
+            printf("Ingrese la coordenada X del destino: ");
+            scanf("%d", &destino_x);
+            printf("Ingrese la coordenada Y del destino: ");
+            scanf("%d", &destino_y);
+
+            // Validar que las coordenadas del destino estén dentro del rango del mapa
+            if (destino_x >= 0 && destino_x < MAP_SIZE && destino_y >= 0 && destino_y < MAP_SIZE) {
+                // Crear una nueva solicitud
+                Solicitud *solicitud = (Solicitud *)malloc(sizeof(Solicitud));
+                if (!solicitud) {
+                    perror("Error al asignar memoria para la solicitud");
+                    return;
+                }
+                solicitud->id = id;
+                solicitud->x = destino_x;
+                solicitud->y = destino_y;
+
+                // Encolar la solicitud
+                queuePush(colaSolicitudes, solicitud);
+                printf("Solicitud agregada correctamente.\n");
+            } else {
+                printf("Coordenadas del destino fuera de rango: %d %d\n", destino_x, destino_y);
+            }
+        } else {
+            printf("El nodo con ID %d no existe.\n", id);
+        }
+
+        printf("¿Desea agregar otra solicitud? (s/n): ");
+        scanf(" %c", &opcion);
+    } while (opcion == 's' || opcion == 'S');
+};
 
 
 
@@ -301,18 +405,22 @@ int main() {
                 break;
             case 2:
                 // Agregar calle (no implementado en este ejemplo)
+                agregar_calle(grafo, nodos);
                 break;
             case 3:
                 imprimir_mapa(mapa);
                 break;
             case 4:
                 // Agregar taxis (no implementado en este ejemplo)
+                agregar_taxi(taxi, mapa);
                 break;
             case 5:
                 // Agregar solicitudes (no implementado en este ejemplo)
+                agregar_solicitud(colaSolicitudes, nodos);
                 break;
             case 6:
                 // Borrar solicitud (no implementado en este ejemplo)
+                // NO IMPLEMENTAR
                 break;
             case 7:
                 // Ver solicitudes (no implementado en este ejemplo)
@@ -322,6 +430,10 @@ int main() {
                 break;
             case 9:
                 printf("Saliendo del programa...\n");
+                Sleep(2000);
+                printf("Saliendo del programa, no se desespere.\n");
+                Sleep(2000);
+                printf("Hasta luego\n");
                 break;
             default:
                 printf("Opción no válida. Intente de nuevo.\n");
